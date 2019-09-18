@@ -20,6 +20,8 @@ The Kubernetes clusters and other Web-based services can make use of `CILogon`_ 
 
 .. _CILogon: https://www.cilogon.org/
 
+identity.lsst.org is a website that allows users to self-manage the linkages of external federated identities with their LSST identity and to self-manage the user profile values and group memberships stored in LDAP.
+
 Duo two-factor authentication can also be configured into the authentication process.
 
 Observatory machines, including those at the Summit and Base as well as those in the Tucson and NCSA test stands, do not currently use a central identity management service; they are using only local accounts at present.
