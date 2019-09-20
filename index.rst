@@ -39,57 +39,52 @@ The 2019 LSST Joint Status Review recommended that this separation occur.
 
 .. _Identity Management Review: https://docushare.lsstcorp.org/docushare/dsweb/Get/Document-32503/Document32503_IDmgmtReviewReport_20190402.docx
 
-Alternatives
-============
+Drawing the Line
+================
 
-In all cases, two-factor authentication should be usable on top of the base identity service.
-This could use Duo, as in the existing system, via NOAO's, NCSA's, or a new LSST-specific configuration.
-The ``pam_duo`` module allows two-factor authentication to be applied to ``ssh`` logins.
-Another two-factor solution, such as hardware `YubiKey`_ with ``yubico-pam`` could also be used in certain contexts.
-As an example, Summit and Base control systems and their bastion hosts and Kubernetes control nodes may want to use a hardware solution since the Summit needs to be able to operate without an external Internet connection.
-
-.. _Yubikey: https://yubico.com/
-
-In addition, Web-based services including deployments on the Kubernetes clusters can continue to use CILogon to provide federated identity.
-The CILogon client configuration for LSST might need to be updated to point to a different LDAP, depending on the alternative chosen.
-
-
-LSST Kerberos
--------------
-
-LDAP in conjunction with Kerberos `is a`_ `recommended`_ `practice`_.
-Using the NCSA Kerberos service is problematic, however, due to the presence of non-LSST identities and the inherent complexity of Kerberos.
-Setting up a separate LSST Kerberos system would keep all interfaces to identity.lsst.org and NCSA-managed services the same.
-Every user would need to create new passwords; by design, Kerberos does not allow extraction of credentials to create the new LSST service.
-
-.. _is a: https://help.ubuntu.com/lts/serverguide/kerberos-ldap.html
-.. _recommended: https://stackoverflow.com/questions/46183178/why-use-kerberos-when-you-can-do-authentication-and-authorization-through-ldap
-.. _practice: https://security.stackexchange.com/questions/109565/kerberos-vs-ldap-for-authentication-which-one-is-more-secure
-
-The LSP handles single sign-on via OAuth tokens that are only indirectly and not necessarily based on Kerberos, and ssh connections typically use public/private key pairs and an ssh agent to allow transferable authentication.
-This means that we are rarely using Kerberos's ability to do single sign-on itself (e.g. via the ``kinit`` command).
-
-NCSA Kerberos for NCSA Services
--------------------------------
-
-In this alternative, the NCSA identity systems would be used unchanged for the "lsst-dev" cluster.
-The Kubernetes clusters and all Tucson, Summit, and Base systems would use the LSST LDAP for authentication.
-Because the identity spaces would be separate and different, the filesystems associated with the "lsst-dev" cluster could not be shared with Kubernetes.
-Additional filesystems would need to be created to hold user home directories and shared datasets accessible from the LSP instances.
-identity.lsst.org would have to be reconfigured and perhaps modified to use the LSST LDAP as its identity source and metadata repository.
-Note that LSP authentication would still proceed via CILogon to allow federated identities to be used; it is only the underlying LSST identity provider that would be switched from Kerberos to LDAP.
+The separation between LSST-based authentication and NCSA-based authentication will initially occur at the NCSA boundary.
+All systems in Tucson and Chile will use Tucson-LDAP-based authentication.
+All systems at NCSA, including the ``lsst-dev`` cluster, the staff Kerberos clusters, and the LSP instances hosted on them, will use the current NCSA-based authentication system.
+The Tucson LDAP and the NCSA LDAP will *not* be merged.
 
 With LDAP being the ultimate source of authentication authority, the security of passwords within and traveling to the LDAP server needs to be ensured.
 All LDAP connections must use TLS, and the passwords within LDAP must be securely hashed.
 
-LSST LDAP for All Services
---------------------------
+A Tucson LDAP replica will be installed at the Summit for use in case of network disconnection.
+In addition, two-factor authentication will be used at the Summit and Base for all control systems and their bastion hosts.
+The server for the extra factor must not require an Internet connection; this could possibly be implemented by Duo with passcodes (not push notifications) or by a hardware `YubiKey`_ with ``yubico-pam``.
 
-The NCSA services, including "lsst-dev", filesystems, and Kubernetes clusters, could be transitioned to using the (presumably Tucson-based) LSST LDAP for authentication.
-ssh would be configured via PAM to use LDAP (``libpam_ldapd`` appears to be the current recommendation).
-Unix user ids and group ids would have to be loaded into the LSST LDAP.
-VPN authentication and other NCSA services like Jira and Nebula would remain on NCSA Kerberos, but only a relatively small number of people need to use these.
-Again, identity.lsst.org would have to be reconfigured and perhaps modified to use the LSST LDAP as its identity source and metadata repository.
+.. _Yubikey: https://yubico.com/
+
+ssh for Summit, Base, and Tucson nodes will be configured via PAM to use LDAP (``libpam_ldapd`` appears to be the current recommendation).
+
+The Commissioning Cluster at the Base and any other Web-based authenticated Observatory services will also be authenticated via the Tucson-based LDAP.
+It is not likely that a full-featured self-serve solution like identity.lsst.org will be needed for the Commissioning Cluster; by default, all work there should be freely shared amongst the Commissioning Team, and having to have an LSST account is not a great burden for non-staff members of that team.
+
+LSST staff developers working on the NCSA resources will continue to have separate LSST and NCSA accounts with distinct logins.
+They would continue to use identity.lsst.org to control federated identities, profile information, and group management for the NCSA identities.
+
+Potential Future Work
+=====================
+
+The Tucson-based LDAP could be made into a full CILogon-compliant identity provider using the `SAML protocol`_.
+`Shibboleth`_ provides an implementation that can use LDAP as a backend, but suitable processes would need to be in place to meet `REFEDS`_ and `SIRTFI`_ standards.
+(NCSA already meets these standards for its identities.)
+In addition, the LDAP schema would need to provide certain CILogon-required elements.
+
+.. _SAML protocol: https://auth0.com/blog/how-saml-authentication-works/
+.. _Shibboleth: https://www.shibboleth.net/products/identity-provider/
+.. _REFEDS: https://wiki.refeds.org/display/ASS/REFEDS+Assurance+Framework+ver+1.0
+.. _SIRTFI: https://aarc-project.eu/policies/sirtfi/
+
+Becoming an identity provider would enable LSST identities to be used to login to CILogon-fronted services at NCSA.
+Such services can include the future US Data Access Center, in addition to the current staff LSP instances.
+Otherwise, staff members would always have to use separate logins for LSST systems in Tucson and Chile versus the US DAC.
+
+A further step would be to have the US DAC identities provided by LSST rather than NCSA.
+Then the LSST identity provider would not be merely a federation possibility but would become the primary provider.
+In this case, a separate instance of the identity.lsst.org management system using the LSST LDAP as its identity source and metadata repository or another system with equivalent functionality would be required to enable DAC users to manage their own profiles and group memberships.
+Note that sharing between the DAC systems and LDF production systems would be difficult or impossible in this scenario, however.
 
 .. .. rubric:: References
 
