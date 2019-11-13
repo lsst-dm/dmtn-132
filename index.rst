@@ -44,10 +44,10 @@ Drawing the Line
 
 The separation between LSST-based authentication and NCSA-based authentication will initially occur at the NCSA boundary.
 All systems in Tucson and Chile will use Tucson-LDAP-based authentication.
-All systems at NCSA, including the ``lsst-dev`` cluster, the staff Kerberos clusters, and the LSP instances hosted on them, will use the current NCSA-based authentication system.
+All systems at NCSA, including the ``lsst-dev`` cluster, the staff Kerberos clusters, and the LSP instances hosted on them, will continue to use the current NCSA-based authentication system.
 The Tucson LDAP and the NCSA LDAP will *not* be merged.
 
-With LDAP being the ultimate source of authentication authority, the security of passwords within and traveling to the LDAP server needs to be ensured.
+With LDAP being the ultimate source of authentication authority for Tucson and Chile, the security of passwords within and traveling to the LDAP server needs to be ensured.
 All LDAP connections must use TLS, and the passwords within LDAP must be securely hashed.
 
 A Tucson LDAP replica will be installed at the Summit for use in case of network disconnection.
@@ -62,7 +62,7 @@ The Commissioning Cluster at the Base and any other Web-based authenticated Obse
 It is not likely that a full-featured self-serve solution like identity.lsst.org will be needed for the Commissioning Cluster; by default, all work there should be freely shared amongst the Commissioning Team, and having to have an LSST account is not a great burden for non-staff members of that team.
 
 LSST staff developers working on the NCSA resources will continue to have separate LSST and NCSA accounts with distinct logins.
-They would continue to use identity.lsst.org to control federated identities, profile information, and group management for the NCSA identities.
+They will continue to use identity.lsst.org to control federated identities, profile information, and group management for the NCSA identities.
 
 Potential Future Work
 =====================
